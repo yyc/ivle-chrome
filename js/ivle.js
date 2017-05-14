@@ -115,6 +115,13 @@ var ivle = (function($){
 				window.location.href = url;
 			};
 
+			//file download
+			this.fileURL = function(fileId){
+				//dont like this. but it works
+				var url = "https://ivle.nus.edu.sg/api/downloadfile.ashx?APIKey=" + apikey + "&AuthToken=" + this.authtoken + "&ID=" + fileId + "&target=workbin";
+				return url;
+			};
+
 			//announcements
 			this.announcements = function(courseId, success, error){
 				var endpoint = 'Announcements';
