@@ -22,7 +22,15 @@ $(document).ready(function() {
   }
   console.log("Token acquired! " + userToken);
   var user = new app.user(userToken);
-  updateUserModules(user).then(updateModules(user));
+  // For browser debugging, remove for production
+  window.user = user;
+  updateUserModules(user)
+    .then(updateModules(user))
+    // Coalesce all the workbins into a single array of workbins before we operate on them
+    .then(moduleWorkbins => {
+      return moduleWorkbins.reduce((acc, mW) => acc.concat(mW), []);
+    })
+    .then(processWorkbins(user));
 });
 
 function updateUserModules(user) {
@@ -40,14 +48,13 @@ function updateUserModules(user) {
         fulfill(arrayedResults);
       },
       function(error) {
-        console.error(error);
         reject(error);
       }
     );
   });
 }
 
-var updateUserModules = user => modules => {
+var updateModules = user => modules => {
   return Promise.all(
     modules.map(
       module =>
@@ -59,12 +66,42 @@ var updateUserModules = user => modules => {
           user.workbin(
             module.id,
             result => {
-              fulfill(result);
+              var workbins = result["Results"].map(workbin => ({
+                id: workbin["ID"],
+                name: workbin["Title"],
+                folders: workbin["Folders"]
+              }));
+              fulfill(workbins);
             },
             error => {
               reject(error);
             }
           );
+        })
+    )
+  );
+};
+
+var processWorkbins = user => workbins => {
+  return Promise.all(
+    workbins.map(
+      workbin =>
+        new Promise((fulfill, reject) => {
+          var localStorage = window.localStorage;
+          var moduleData = JSON.parse(localStorage.getItem(workbin.id));
+          console.log(moduleData);
+          if (!moduleData) {
+            // Entry does not exist, create and notify
+            moduleData = Object.assign({ sync: false }, workbin);
+            //localStorage.setItem(Object.)
+            var notif = new Notification(
+              `New Workbin Found: ${moduleData.name}`,
+              {
+                body: "Click to set sync options"
+              }
+            );
+            console.log(notif);
+          }
         })
     )
   );
