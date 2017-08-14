@@ -17,7 +17,7 @@ $(document).ready(function() {
   if (!userToken) {
     console.log("User token not found, please log in");
     $("login").show();
-    app.auth($("login-button"), window.location.href);
+    app.auth($("#login-button"), window.location.href);
     return;
   }
   console.log("Token acquired! " + userToken);
